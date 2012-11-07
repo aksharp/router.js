@@ -50,6 +50,14 @@
         })
     ]);
 
+    // homepage route
+    route.register(new Route(
+            '/',
+            function(){
+                $write('You are on the homepage');
+            }
+    ));
+
     // routing - can be chained using jquery promises above
     route.to('/newyork').then(function(){
         route.to('/california');
