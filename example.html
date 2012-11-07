@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SPIKE</title>
+    <script type="text/javascript" src="jquery.min.js"></script>
+    <script type="text/javascript" src="mustache.js"></script>
+    <script type="text/javascript" src="nexus-core-no-require.js"></script>
+    <script type="text/javascript" src="nexus-router-no-require.js"></script>
+    <script type="text/javascript" src="nexus-mustache-view-engine-no-require.js"></script>
+</head>
+<body>
+
+<!-- placeholders -->
+<div id="viewResult"></div>
+
+<!-- mustache tempalte -->
+<script id="personTpl" type="text/template">
+    <h1>{{firstName}} {{lastName}}</h1>
+    <div id="{{result}}"></div>
+</script>
+
+<script type="text/javascript">
+
+    // logging everything example
+    nexus.bind({
+        handle: function($message){
+            console.log($message);
+        },
+        scope: nexus.scope.allOnAllThreads
+    });
+
+    // spinner example
+    nexus.bind({
+        handles: '$spinnerShown',
+        handle: function($event){
+            $($event.model.selector).html('SPINNING!!! PLEASE WAIT!!!');
+        }
+    });
+
+    // done
+    nexus.bind({
+        handles: '$fullyRendered',
+        handle: function($event){
+            $($event.model.selector).html($event.model.name +' fully rendered');
+        }
+    });
+
+    nexus.bind({
+        handles: '$showView',
+        handle: function($command){
+            var deferred = $.Deferred();
+            var id = nexus.newId();
+            var $id = '#' + id;
+            viewEngine.render({
+                data: {
+                    firstName: $command.model.firstName,
+                    lastName: $command.model.lastName,
+                    result: id
+                },
+                template: '#personTpl',
+                placeholder: '#viewResult',
+                option: 'APPEND',
+                onLoad: function(view){
+                    var deferred = $.Deferred();
+                    var asyncStuff = function(){
+                        setTimeout(function() {
+                            deferred.resolve($command, $id);
+                        }, $command.model.wait);
+                    };
+                    asyncStuff.call();
+                    $command.publishEvent('$spinnerShown', {selector: $id});
+                    return deferred.promise();
+                }
+            })
+            .done(function(){
+                $command.publishEvent('$fullyRendered', {selector: $id, name: $command.model.firstName + ' ' + $command.model.lastName});
+                deferred.resolve();
+            });
+            return deferred.promise();
+        }
+    });
+
+    // single route registration
+    route.register(new Route(
+            '/writer/:name',    //dynamic route variables
+            function($route){
+                if ($route.model.name === 'agatha'){
+                    nexus.command('$showView', {firstName: 'Agatha', lastName: 'Christie', wait: 0});
+                }
+                if ($route.model.name === 'london'){
+                    nexus.command('$showView', {firstName: 'Jack', lastName: 'London', wait: 0});
+                }
+                if ($route.model.name === 'dumas'){
+                    nexus.command('$showView', {firstName: 'Alexander', lastName: 'Dumas', wait: 0})
+                }
+            }
+    ));
+
+    // multiple routes registration
+    route.registerAll([
+        new Route('/london', function(){
+            return nexus.command('$showView', {firstName: 'Jack', lastName: 'London', wait: 500}).done(function($command){
+                // thread affinity
+                $command.dispatchCommand('$showView', {firstName: 'Alexander', lastName: 'Pushkin', wait: 300})
+            });
+        }),
+        new Route('/agatha', function(){
+            return nexus.command('$showView', {firstName: 'Agatha', lastName: 'Christie', wait: 0});
+        })
+    ]);
+
+    // routing
+    route.to('/london').then(function(){
+        route.to('/writer/agatha');
+    });
+
+
+
+
+</script>
+
+</body>
+</html>
