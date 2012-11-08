@@ -1,67 +1,34 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>router.js example</title>
-    <script type="text/javascript" src="lib/jquery.min.js"></script>
-    <script type="text/javascript" src="router.js"></script>
+    <title>router.js examples</title>
+    <style>
+        i {
+            color: orange;
+        }
+    </style>
 </head>
 <body>
 
-<!-- placeholder -->
-<div id="result"></div>
+<h2>Registering route and routing to it</h2>
+<iframe style="width: 800px; height: 520px" src="http://jsfiddle.net/Xb4Tv/1/embedded/" allowfullscreen="allowfullscreen" frameborder="1"></iframe>
 
-<script type="text/javascript">
+<h2>Registering multiple routes and routing to them</h2>
+<iframe style="width: 800px; height: 420px" src="http://jsfiddle.net/WYA9u/embedded/" allowfullscreen="allowfullscreen" frameborder="1"></iframe>
 
-    var $result = $('#result');
-    // helper write function
-    var $write = function(text){
-        $result.append(text + '<br />');
-    }
+<h2>Sequential routing </h2>
+<h4>You can make sure that synchronous routes are routed in order by writing them out one after another</h4>
+<b>Example:</b><br />
+<i>route.to('/some/route');</i><br />
+<i>route.to('/another/route');</i><br />
+<p></p>
+<h4>However, if your route function is asynchronous, route resolution order can be ensured using jQuery promises. See jsFiddle below: </h4>
+<iframe style="width: 800px; height: 700px" src="http://jsfiddle.net/sdAE6/embedded/" allowfullscreen="allowfullscreen" frameborder="1"></iframe>
 
-    // single route registration
-    route.register(new Route(
-            '/writer/:name',    //dynamic route variables
-            function($route){
-                if ($route.model.name === 'agatha'){    // model has route variables attached to it by convention
-                    $write('Agatha Christie');
-                }
-                if ($route.model.name === 'london'){
-                    $write('Jack London');
-                }
-                if ($route.model.name === 'dumas'){
-                    $write('Alexander Dumas');
-                }
-            }
-    ));
+<h2>Routes on URL</h2>
+<h4>URL will look something like this: <i>index.html#/your/route</i> You can navigate directly to registered route's url and it will be resolved</h4>
 
-    // multiple routes registration
-    route.registerAll([
-        new Route('/newyork', function(){
-            var deferred = $.Deferred();    // example using jquery promises
-            $write('New York');
-            setTimeout(function(){
-                $write('is where statue of liberty is located');  // route does something async
-                deferred.resolve();
-            }, 1000);
-            return deferred.promise();  // returns a promise and can be chained (see route.to below)
-        }),
-        new Route('/california', function(){
-            $write('California is where the golden bridge is located');
-        })
-    ]);
-
-    // routing - can be chained using jquery promises above
-    route.to('/newyork').then(function(){
-        route.to('/california');
-    });
-
-    // now append this to url in your browser
-    // #/writer/agatha
-    // and hit return
-    //
-    // hope you like it, enjoy!
-
-</script>
-
+<h2>Navigation & History</h2>
+<h4>Routes are stored in your browser history and you can navigate back and forth using your browser's back and forward buttons</h4>
 </body>
 </html>
